@@ -6,7 +6,7 @@ class HttpGateway {
     { name: "Book 1", author: "Author 1" },
     { name: "Book 2", author: "Author 2" },
   ];
-  get = async (path) => {
+  get = async () => {
     return { result: this.books };
   };
   post = async (path, requestDto) => {
@@ -19,9 +19,15 @@ class HttpGateway {
   };
 }
 const httpGateway = new HttpGateway();
-export class Observable {
-  _value = null;
-  subscribers = [];
+
+interface IObservable {
+  value: any;
+  subscribe(handler: Function): Function;
+  publish(): void;
+}
+export class Observable implements IObservable {
+  private _value;
+  private _subscribers = [];
   constructor(initialValue) {
     this._value = initialValue;
   }
@@ -32,43 +38,57 @@ export class Observable {
     this._value = newValue;
   }
   publish = () => {
-    this.subscribers.forEach((observer) => {
-      observer(this._value);
-    });
+    for (const callback of this._subscribers) {
+      callback(this._value);
+    }
   };
-  subscribe = (func) => {
-    this.subscribers.push(func);
+  subscribe = (callback) => {
+    this._subscribers.push(callback);
   };
 }
 class Repository {
-  repoState = null;
-  apiUrl = "fakedata";
+  private _state;
   constructor() {
-    this.repoState = new Observable([]);
+    this._state = new Observable([]);
   }
+  get value() {
+    return this._state.value;
+  }
+  set value(newValue) {
+    console.log("Setting new value:", newValue); // Debug log
+    this._state.value = newValue;
+  }
+  publish = () => {
+    this._state.publish();
+  };
+  subscribe = (callback) => {
+    return this._state.subscribe(callback);
+  };
+  load = async () => {
+    const booksDto = await httpGateway.get();
+    console.log(`booksDto: ${JSON.stringify(booksDto, null, 2)}`);
+    this._state.value = booksDto.result.map((bookDto) => {
+      return bookDto;
+    });
+  };
   getBooks = async (callback) => {
-    this.repoState.subscribe(callback);
-    await this.loadApiData();
-    this.repoState.publish();
+    this._state.subscribe(callback);
+    await this.load();
+    this._state.publish();
   };
   addBook = async (fields) => {
     console.log(`Repository.postApiData(fields): ${JSON.stringify(fields)}`);
     await this.postApiData(fields);
 
-    await this.loadApiData();
-    this.repoState.publish();
+    await this.load();
+    this._state.publish();
   };
   removeBooks = async () => {
     await this.deleteApiData();
-    await this.loadApiData();
-    this.repoState.publish();
+    await this.load();
+    this._state.publish();
   };
-  loadApiData = async () => {
-    const booksDto = await httpGateway.get(this.apiUrl + "books");
-    this.repoState.value = booksDto.result.map((bookDto) => {
-      return bookDto;
-    });
-  };
+
   postApiData = async (fields) => {
     console.log(`httpGateway.post(fields): ${JSON.stringify(fields, null, 2)}`);
 
@@ -78,14 +98,8 @@ class Repository {
     await httpGateway.delete(this.apiUrl + "reset");
   };
   getData = async () => {
-    await this.loadApiData();
-    return this.repoState.value;
-  };
-  subscribe = (callback) => {
-    this.repoState.subscribe(callback);
-  };
-  publish = () => {
-    this.repoState.publish();
+    await this.load();
+    return this._state.value;
   };
 }
 const RepositoryObject = new Repository();
@@ -108,7 +122,7 @@ export class BooksPresenter {
       const repoData = await this.transformData();
       callback(repoData);
     });
-    await RepositoryObject.loadApiData();
+    await RepositoryObject.load();
     RepositoryObject.publish();
   };
   post = async (fields) => {
