@@ -22,8 +22,8 @@ const httpGateway = new HttpGateway();
 
 interface IObservable {
   value: any;
-  subscribe(handler: Function): Function;
   publish(): void;
+  subscribe(handler: Function): Function;
 }
 export class Observable implements IObservable {
   private _value;
@@ -51,14 +51,14 @@ class Repository {
   constructor() {
     this._state = new Observable([]);
   }
-  get value() {
+  private get value() {
     return this._state.value;
   }
-  set value(newValue) {
+  private set value(newValue) {
     console.log("Setting new value:", newValue); // Debug log
     this._state.value = newValue;
   }
-  publish = () => {
+  private publish = () => {
     this._state.publish();
   };
   subscribe = (callback) => {
@@ -67,15 +67,15 @@ class Repository {
   load = async () => {
     const booksDto = await httpGateway.get();
     console.log(`booksDto: ${JSON.stringify(booksDto, null, 2)}`);
-    this._state.value = booksDto.result.map((bookDto) => {
+    this.value = booksDto.result.map((bookDto) => {
       return bookDto;
     });
   };
-  getBooks = async (callback) => {
-    this._state.subscribe(callback);
-    await this.load();
-    this._state.publish();
-  };
+  // getBooks = async (callback) => {
+  //   this._state.subscribe(callback);
+  //   await this.load();
+  //   this._state.publish();
+  // };
   addBook = async (fields) => {
     console.log(`Repository.postApiData(fields): ${JSON.stringify(fields)}`);
     await this.postApiData(fields);
