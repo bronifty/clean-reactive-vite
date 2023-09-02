@@ -21,53 +21,51 @@ class HttpGateway {
 const httpGateway = new HttpGateway();
 export class Observable {
   _value = null;
-  observers = [];
+  subscribers = [];
   constructor(initialValue) {
     this._value = initialValue;
-  }
-  set value(newValue) {
-    this._value = newValue;
   }
   get value() {
     return this._value;
   }
-  subscribe = (func) => {
-    this.observers.push(func);
-  };
-  notify = () => {
-    this.observers.forEach((observer) => {
+  set value(newValue) {
+    this._value = newValue;
+  }
+  publish = () => {
+    this.subscribers.forEach((observer) => {
       observer(this._value);
     });
   };
+  subscribe = (func) => {
+    this.subscribers.push(func);
+  };
 }
-class BooksRepository {
-  programmersModel = null;
+class Repository {
+  repoState = null;
   apiUrl = "fakedata";
   constructor() {
-    this.programmersModel = new Observable([]);
+    this.repoState = new Observable([]);
   }
   getBooks = async (callback) => {
-    this.programmersModel.subscribe(callback);
+    this.repoState.subscribe(callback);
     await this.loadApiData();
-    this.programmersModel.notify();
+    this.repoState.publish();
   };
   addBook = async (fields) => {
-    console.log(
-      `BooksRepository.postApiData(fields): ${JSON.stringify(fields)}`
-    );
+    console.log(`Repository.postApiData(fields): ${JSON.stringify(fields)}`);
     await this.postApiData(fields);
 
     await this.loadApiData();
-    this.programmersModel.notify();
+    this.repoState.publish();
   };
   removeBooks = async () => {
     await this.deleteApiData();
     await this.loadApiData();
-    this.programmersModel.notify();
+    this.repoState.publish();
   };
   loadApiData = async () => {
     const booksDto = await httpGateway.get(this.apiUrl + "books");
-    this.programmersModel.value = booksDto.result.map((bookDto) => {
+    this.repoState.value = booksDto.result.map((bookDto) => {
       return bookDto;
     });
   };
@@ -81,19 +79,19 @@ class BooksRepository {
   };
   getData = async () => {
     await this.loadApiData();
-    return this.programmersModel.value;
+    return this.repoState.value;
   };
   subscribe = (callback) => {
-    this.programmersModel.subscribe(callback);
+    this.repoState.subscribe(callback);
   };
   publish = () => {
-    this.programmersModel.notify();
+    this.repoState.publish();
   };
 }
-const booksRepository = new BooksRepository();
+const RepositoryObject = new Repository();
 export class BooksPresenter {
   transformData = async () => {
-    const repoData = await booksRepository.getData();
+    const repoData = await RepositoryObject.getData();
     const transformedRepoData = repoData.map((data) => {
       return {
         name: data.name,
@@ -106,19 +104,19 @@ export class BooksPresenter {
   };
 
   load = async (callback) => {
-    booksRepository.subscribe(async () => {
+    RepositoryObject.subscribe(async () => {
       const repoData = await this.transformData();
       callback(repoData);
     });
-    await booksRepository.loadApiData();
-    booksRepository.publish();
+    await RepositoryObject.loadApiData();
+    RepositoryObject.publish();
   };
   post = async (fields) => {
-    console.log(`booksRepository.addBook(fields): ${JSON.stringify(fields)}`);
-    await booksRepository.addBook(fields);
+    console.log(`RepositoryObject.addBook(fields): ${JSON.stringify(fields)}`);
+    await RepositoryObject.addBook(fields);
   };
   delete = async () => {
-    await booksRepository.removeBooks();
+    await RepositoryObject.removeBooks();
   };
 }
 function App() {
