@@ -213,17 +213,13 @@ export class Presenter {
   };
   load = async (callback) => {
     this.subscribe(callback);
-    const presenterInitResult = await this.init();
-    console.log(
-      `presenterInitResult: ${JSON.stringify(presenterInitResult, null, 2)}`
-    );
-
+    await this.init();
     this.publish();
   };
   post = async (fields) => {
     await storeObject.dispatch("Add", fields);
   };
-  delete = async () => {
+  delete = () => {
     storeObject.value = { result: [] };
   };
 }
