@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
-
-// Gateway class with static methods; we'll see if we run into trouble testing this
+// going to figure out how to sync the Store and Gateway (API backend / db)
 class Gateway {
   static books = [
     { name: "Book 1", author: "Author 1" },
@@ -19,31 +18,59 @@ class Gateway {
     return { success: true };
   }
 }
-interface IObservable {
+export interface IObservable {
   value: any;
-  publish(): void;
   subscribe(handler: Function): Function;
+  push(item: any): void;
+  publish(): void;
+  compute(): Promise<void>;
 }
-// Observable is reactive state
 export class Observable implements IObservable {
-  private _value;
-  private _subscribers = [];
-  constructor(initialValue) {
-    this._value = initialValue;
+  private _value: any;
+  private _previousValue: any;
+  private _subscribers: Function[] = [];
+  private static _computeActive: Observable | null = null;
+  private _computeFunction: Function | null = null;
+  private _computeArgs: any[] = [];
+  private static _computeChildren: Observable[] = [];
+  private _childSubscriptions: Function[] = [];
+
+  constructor(initialValue: any, ...args: any[]) {
+    this._previousValue = undefined; // Initialize _previousValue
+    if (typeof initialValue === "function") {
+      this._computeFunction = initialValue;
+      this._computeArgs = args;
+      this.compute();
+    } else {
+      this._value = initialValue;
+    }
   }
+
   get value() {
+    if (
+      Observable._computeActive &&
+      !Observable._computeChildren.includes(this)
+    ) {
+      Observable._computeChildren.push(this);
+    }
     return this._value;
   }
-  set value(newValue) {
+
+  set value(newValue: any) {
+    this._previousValue = this._value; // Store the current value as the previous value
     this._value = newValue;
     this.publish();
   }
-  publish = () => {
-    for (const handler of this._subscribers) {
-      handler(this._value);
+
+  push(item: any) {
+    if (Array.isArray(this._value)) {
+      this._value.push(item);
+    } else {
+      throw new Error("Push can only be called on an observable array.");
     }
-  };
-  subscribe = (handler) => {
+  }
+
+  subscribe(handler: Function) {
     this._subscribers.push(handler);
     return () => {
       const index = this._subscribers.indexOf(handler);
@@ -51,96 +78,175 @@ export class Observable implements IObservable {
         this._subscribers.splice(index, 1);
       }
     };
-  };
-}
-// Store manages Gateway and Observable as primary state of App
-class Store {
-  private state;
-  constructor() {
-    this.state = new Observable([]);
   }
-  private get value() {
-    return this.state.value;
-  }
-  private set value(newValue) {
-    console.log("Setting new value:", newValue); // Debug log
-    this.state.value = newValue;
-  }
-  private publish = () => {
-    this.state.publish();
-  };
-  load = async () => {
-    const booksDto = await Gateway.get();
-    console.log(`booksDto: ${JSON.stringify(booksDto, null, 2)}`);
-    this.value = booksDto.result.map((bookDto) => {
-      return bookDto;
-    });
-  };
-  subscribe = (callback) => {
-    return this.state.subscribe(callback);
-  };
-  post = async (fields) => {
-    console.log(`Gateway.post(fields): ${JSON.stringify(fields, null, 2)}`);
-    await Gateway.post("books", fields);
-  };
-  delete = async () => {
-    await Gateway.delete("reset");
-  };
 
-  // getBooks = async (callback) => {
-  //   this.state.subscribe(callback);
-  //   await this.load();
-  //   this.state.publish();
-  // };
-  addBook = async (fields) => {
-    console.log(`Store.post(fields): ${JSON.stringify(fields)}`);
-    await this.post(fields);
-    await this.load();
-    this.state.publish();
+  publish() {
+    this._subscribers.forEach((handler) =>
+      handler(this._value, this._previousValue)
+    ); // Pass both current and previous values
+  }
+
+  static delay(ms: number) {
+    let timeoutId: number;
+    const promise = new Promise((resolve) => {
+      timeoutId = setTimeout(resolve, ms);
+    });
+    const clear = () => clearTimeout(timeoutId);
+    return { promise, clear };
+  }
+
+  // called by child observable subscriptions and by the constructor
+  async compute() {
+    if (this._computeFunction) {
+      // Unsubscribe old child subscriptions
+      this._childSubscriptions.forEach((unsubscribe) => unsubscribe());
+      this._childSubscriptions.length = 0;
+
+      Observable._computeActive = this;
+      this._previousValue = this._value; // Store the current value as the previous value
+      const computedValue = this._computeFunction(...this._computeArgs);
+      // Handle the case where the computed value is a Promise
+      if (computedValue instanceof Promise) {
+        this._value = await computedValue; // Await the promise resolution
+      } else {
+        this._value = computedValue;
+      }
+      this.publish();
+      Observable._computeActive = null;
+      Observable._computeChildren.forEach((child) =>
+        this._childSubscriptions.push(child.subscribe(() => this.compute()))
+      );
+      Observable._computeChildren.length = 0;
+    }
+  }
+}
+
+export class ObservableFactory {
+  static create(initialValue: any, ...args: any[]): IObservable {
+    return new Observable(initialValue, ...args);
+  }
+}
+
+type Action = "Add" | "Remove";
+type BookFields = {
+  name: string;
+  author: string;
+};
+type Model = BookFields[];
+
+class Store {
+  private static _instance: Store | null = null;
+  private _state: IObservable;
+  private constructor(init: any) {
+    this._state = ObservableFactory.create(init);
+  }
+  static getInstance(init: any = {}) {
+    if (!this._instance) {
+      this._instance = new Store(init);
+    }
+    return this._instance;
+  }
+  get value() {
+    return this._state.value;
+  }
+  set value(newValue: any) {
+    // const intermediateValue1 = this._state.value;
+    // const intermediateValue2 = intermediateValue1.push(newValue);
+    // this._state.value = intermediateValue2;
+    this._state.value = newValue;
+  }
+  publish = () => {
+    this._state.publish();
   };
-  removeBooks = async () => {
-    await this.delete();
-    await this.load();
-    this.state.publish();
+  subscribe = (subscriber) => {
+    this._state.subscribe(subscriber);
   };
-  getData = async () => {
-    await this.load();
-    return this.state.value;
+  push = (newVal) => {
+    console.log(`push(${JSON.stringify(newVal, null, 2)})`);
+
+    this._state.push(newVal);
+  };
+  dispatch = (action: Action, payload: BookFields) => {
+    console.log(`dispatch(${action}, ${JSON.stringify(payload)})`);
+
+    this.value = this.reducer(action, payload);
+    console.log(`this.value: ${this._state.value}`);
+  };
+  private reducer = (action: Action, fields: BookFields): Model => {
+    const currentValue = this._state.value;
+    console.log(`currentValue ${JSON.stringify(currentValue)}`);
+    switch (action) {
+      case "Add":
+        return currentValue.push(fields);
+      case "Remove":
+        return (this._state.value = []);
+      default:
+        return this._state.value;
+    }
   };
 }
-const StoreObject = new Store();
-// Transformer transforms and adapts Store data for components
-export class Transformer {
-  transform = async () => {
-    const repoData = await StoreObject.getData();
-    const transformedRepoData = repoData.map((data) => {
-      return {
-        name: data.name,
-      };
+// refactor to put this in the store and use store to call the Gateway for an initial value
+const init: Model = [
+  { name: "Book 1", author: "Author 1" },
+  { name: "Book 2", author: "Author 2" },
+];
+const storeObject = Store.getInstance(init);
+export class Presenter {
+  // transform = async () => {
+  //   const repoData = await storeObject.value;
+  //   // if length of repoData > 0, transform it
+  //   if (repoData.length === 0) return;
+  //   const transformedRepoData = repoData.map((book: BookFields) => {
+  //     return {
+  //       name: book.name,
+  //       author: book.author,
+  //     };
+  //   });
+  //
+  //     `transformedRepoData: ${JSON.stringify(transformedRepoData, null, 2)}`
+  //   );
+  //   return transformedRepoData;
+  // };
+  subscribe = (componentSubscriber) => {
+    storeObject.subscribe((observableModel) => {
+      const viewModel = observableModel.map((om) => {
+        return { name: om.name, author: om.author };
+      });
+      componentSubscriber(viewModel);
     });
-    console.log(
-      `transformedRepoData: ${JSON.stringify(transformedRepoData, null, 2)}`
-    );
-    return transformedRepoData;
+    storeObject.publish();
   };
-  load = async (callback) => {
-    StoreObject.subscribe(async () => {
-      const repoData = await this.transform();
-      callback(repoData);
-    });
-    await StoreObject.load();
-    StoreObject.publish();
+  publish = () => {
+    storeObject.publish();
   };
+  // load = async (componentSubscriber) => {
+  //   storeObject.subscribe((observableModel) => {
+  //     const viewModel = observableModel.map((om) => {
+  //       return { name: om.name, author: om.author };
+  //     });
+  //     componentSubscriber(viewModel);
+  //   });
+  //   storeObject.publish();
+  // };
   post = async (fields) => {
-    console.log(`StoreObject.addBook(fields): ${JSON.stringify(fields)}`);
-    await StoreObject.addBook(fields);
+    console.log(
+      `storeObject.push(${JSON.stringify(
+        fields,
+        null,
+        2
+      )}); storeObject.publish()`
+    );
+
+    storeObject.push(fields);
+    storeObject.publish();
+    // await storeObject.dispatch("Add", fields);
   };
   delete = async () => {
-    await StoreObject.removeBooks();
+    // await storeObject.removeBooks();
   };
 }
 function App() {
-  const TransformerObject = new Transformer();
+  const PresenterObject = new Presenter();
   const [state, setState] = React.useState([]);
   const defaultValues = {
     name: "",
@@ -152,21 +258,22 @@ function App() {
   };
   // loads data from store on mount
   React.useEffect(() => {
+    const componentSubscriber = (viewModel) => setState(viewModel);
     async function load() {
-      await TransformerObject.load((viewModel) => {
-        setState(viewModel);
-      });
+      await PresenterObject.subscribe(componentSubscriber);
+      PresenterObject.publish();
     }
     load();
   }, []);
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(`TransformerObject.post(fields): ${JSON.stringify(fields)}`);
-    TransformerObject.post(fields);
+    console.log(`PresenterObject.post(${JSON.stringify(fields, null, 2)})`);
+
+    PresenterObject.post(fields);
     setFields(defaultValues);
   };
   const removeBooks = () => {
-    TransformerObject.delete();
+    PresenterObject.delete();
   };
   return (
     <div>
