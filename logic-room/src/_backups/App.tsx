@@ -16,11 +16,11 @@ const bookObservable = ObservableFactory.create([
 const firstComputedFunction = () => bookObservable.value;
 const firstComputed = ObservableFactory.create(firstComputedFunction);
 
-// const secondComputedFunction = () => firstComputed.value;
-// const secondComputed = ObservableFactory.create(secondComputedFunction);
+const secondComputedFunction = () => firstComputed.value;
+const secondComputed = ObservableFactory.create(secondComputedFunction);
 
-// const thirdComputedFunction = () => secondComputed.value;
-// const thirdComputed = ObservableFactory.create(thirdComputedFunction);
+const thirdComputedFunction = () => secondComputed.value;
+const thirdComputed = ObservableFactory.create(thirdComputedFunction);
 
 function ParameterizedApp({
   observableInstance,
@@ -61,9 +61,6 @@ function ParameterizedApp({
   const refreshBooks = () => {
     // PresenterObject.init();
   };
-  const publishBooks = () => {
-    observableInstance.publish();
-  };
   return (
     <div>
       <h2>Books</h2>
@@ -94,9 +91,6 @@ function ParameterizedApp({
         />
         <button type="submit">Submit</button>
       </form>
-      <h2>Publish</h2>
-      <button onClick={publishBooks}>Publish Books</button>
-
       <h2>Remove Books</h2>
       <button onClick={removeBooks}>Delete Books</button>
       <h2>Refresh Books</h2>
@@ -112,10 +106,10 @@ function App() {
       <ParameterizedApp observableInstance={bookObservable} />
       <h1>App 2</h1>
       <ParameterizedApp observableInstance={firstComputed} />
-      {/* <h1>App 3</h1>
+      <h1>App 3</h1>
       <ParameterizedApp observableInstance={secondComputed} />
       <h1>App 4</h1>
-      <ParameterizedApp observableInstance={thirdComputed} /> */}
+      <ParameterizedApp observableInstance={thirdComputed} />
     </>
   );
 }
