@@ -182,7 +182,6 @@ export class Presenter {
     storeObject.publish();
   };
   post = async (fields) => {
-    console.log(`storeObject.dispatch("Add", fields)`);
     await storeObject.dispatch("Add", fields);
   };
   delete = async () => {
@@ -211,7 +210,6 @@ function App() {
   }, []);
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(`PresenterObject.post(${JSON.stringify(fields, null, 2)})`);
     PresenterObject.post(fields);
     setFields(defaultValues);
   };
