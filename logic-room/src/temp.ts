@@ -15,6 +15,8 @@ class Observable {
       Observable._childObservables.forEach((obs) => {
         obs.subscribe(() => this.compute());
       });
+    } else {
+      this._value = init;
     }
   }
   get value() {
