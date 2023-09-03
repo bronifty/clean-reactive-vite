@@ -252,6 +252,9 @@ function App() {
   const removeBooks = () => {
     PresenterObject.delete();
   };
+  const refreshBooks = () => {
+    PresenterObject.init();
+  };
   return (
     <div>
       <h2>Books</h2>
@@ -284,6 +287,8 @@ function App() {
       </form>
       <h2>Remove Books</h2>
       <button onClick={removeBooks}>Delete Books</button>
+      <h2>Refresh Books</h2>
+      <button onClick={refreshBooks}>Refresh Books</button>
     </div>
   );
 }
