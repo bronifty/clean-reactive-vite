@@ -1,30 +1,30 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 
-class HttpGateway {
-  books = [
+// Gateway class with static methods; we'll see if we run into trouble testing this
+class Gateway {
+  static books = [
     { name: "Book 1", author: "Author 1" },
     { name: "Book 2", author: "Author 2" },
   ];
-  get = async () => {
+  static async get() {
     return { result: this.books };
-  };
-  post = async (path, requestDto) => {
+  }
+  static async post(path: string, requestDto: any) {
     this.books.push(requestDto);
     return { success: true };
-  };
-  delete = async (path) => {
+  }
+  static async delete(path: string) {
     this.books.length = 0;
     return { success: true };
-  };
+  }
 }
-const httpGateway = new HttpGateway();
-
 interface IObservable {
   value: any;
   publish(): void;
   subscribe(handler: Function): Function;
 }
+// Observable is reactive state
 export class Observable implements IObservable {
   private _value;
   private _subscribers = [];
@@ -46,66 +46,66 @@ export class Observable implements IObservable {
     this._subscribers.push(callback);
   };
 }
-class Repository {
-  private _state;
+// Store manages Gateway and Observable as primary state of App
+class Store {
+  private state;
   constructor() {
-    this._state = new Observable([]);
+    this.state = new Observable([]);
   }
   private get value() {
-    return this._state.value;
+    return this.state.value;
   }
   private set value(newValue) {
     console.log("Setting new value:", newValue); // Debug log
-    this._state.value = newValue;
+    this.state.value = newValue;
   }
   private publish = () => {
-    this._state.publish();
-  };
-  subscribe = (callback) => {
-    return this._state.subscribe(callback);
+    this.state.publish();
   };
   load = async () => {
-    const booksDto = await httpGateway.get();
+    const booksDto = await Gateway.get();
     console.log(`booksDto: ${JSON.stringify(booksDto, null, 2)}`);
     this.value = booksDto.result.map((bookDto) => {
       return bookDto;
     });
   };
+  subscribe = (callback) => {
+    return this.state.subscribe(callback);
+  };
+  post = async (fields) => {
+    console.log(`Gateway.post(fields): ${JSON.stringify(fields, null, 2)}`);
+    await Gateway.post("books", fields);
+  };
+  delete = async () => {
+    await Gateway.delete("reset");
+  };
+
   // getBooks = async (callback) => {
-  //   this._state.subscribe(callback);
+  //   this.state.subscribe(callback);
   //   await this.load();
-  //   this._state.publish();
+  //   this.state.publish();
   // };
   addBook = async (fields) => {
-    console.log(`Repository.postApiData(fields): ${JSON.stringify(fields)}`);
-    await this.postApiData(fields);
-
+    console.log(`Store.post(fields): ${JSON.stringify(fields)}`);
+    await this.post(fields);
     await this.load();
-    this._state.publish();
+    this.state.publish();
   };
   removeBooks = async () => {
-    await this.deleteApiData();
+    await this.delete();
     await this.load();
-    this._state.publish();
-  };
-
-  postApiData = async (fields) => {
-    console.log(`httpGateway.post(fields): ${JSON.stringify(fields, null, 2)}`);
-
-    await httpGateway.post(this.apiUrl + "books", fields);
-  };
-  deleteApiData = async () => {
-    await httpGateway.delete(this.apiUrl + "reset");
+    this.state.publish();
   };
   getData = async () => {
     await this.load();
-    return this._state.value;
+    return this.state.value;
   };
 }
-const RepositoryObject = new Repository();
-export class BooksPresenter {
-  transformData = async () => {
-    const repoData = await RepositoryObject.getData();
+const StoreObject = new Store();
+// Transformer transforms and adapts Store data for components
+export class Transformer {
+  transform = async () => {
+    const repoData = await StoreObject.getData();
     const transformedRepoData = repoData.map((data) => {
       return {
         name: data.name,
@@ -116,55 +116,55 @@ export class BooksPresenter {
     );
     return transformedRepoData;
   };
-
   load = async (callback) => {
-    RepositoryObject.subscribe(async () => {
-      const repoData = await this.transformData();
+    StoreObject.subscribe(async () => {
+      const repoData = await this.transform();
       callback(repoData);
     });
-    await RepositoryObject.load();
-    RepositoryObject.publish();
+    await StoreObject.load();
+    StoreObject.publish();
   };
   post = async (fields) => {
-    console.log(`RepositoryObject.addBook(fields): ${JSON.stringify(fields)}`);
-    await RepositoryObject.addBook(fields);
+    console.log(`StoreObject.addBook(fields): ${JSON.stringify(fields)}`);
+    await StoreObject.addBook(fields);
   };
   delete = async () => {
-    await RepositoryObject.removeBooks();
+    await StoreObject.removeBooks();
   };
 }
 function App() {
-  const booksPresenter = new BooksPresenter();
-  const [stateViewModel, copyViewModelToStateViewModel] = React.useState([]);
+  const TransformerObject = new Transformer();
+  const [state, setState] = React.useState([]);
   const defaultValues = {
     name: "",
     author: "",
   };
   const [fields, setFields] = React.useState(defaultValues);
+  const setField = (field, value) => {
+    setFields((old) => ({ ...old, [field]: value }));
+  };
+  // loads data from store on mount
   React.useEffect(() => {
     async function load() {
-      await booksPresenter.load((viewModel) => {
-        copyViewModelToStateViewModel(viewModel);
+      await TransformerObject.load((viewModel) => {
+        setState(viewModel);
       });
     }
     load();
   }, []);
-  const setField = (field, value) => {
-    setFields((old) => ({ ...old, [field]: value }));
-  };
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(`booksPresenter.post(fields): ${JSON.stringify(fields)}`);
-    booksPresenter.post(fields);
+    console.log(`TransformerObject.post(fields): ${JSON.stringify(fields)}`);
+    TransformerObject.post(fields);
     setFields(defaultValues);
   };
   const removeBooks = () => {
-    booksPresenter.delete();
+    TransformerObject.delete();
   };
   return (
     <div>
       <h2>Books</h2>
-      {stateViewModel.map((book, i) => {
+      {state.map((book, i) => {
         return <div key={i}>{book.name}</div>;
       })}
       <h2>Add Book</h2>
