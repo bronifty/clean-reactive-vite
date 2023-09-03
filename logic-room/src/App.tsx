@@ -45,7 +45,6 @@ export class Observable implements IObservable {
       this._value = initialValue;
     }
   }
-
   get value() {
     if (
       Observable._computeActive &&
@@ -55,13 +54,11 @@ export class Observable implements IObservable {
     }
     return this._value;
   }
-
   set value(newValue: any) {
     this._previousValue = this._value; // Store the current value as the previous value
     this._value = newValue;
     this.publish();
   }
-
   push(item: any) {
     if (Array.isArray(this._value)) {
       this._value.push(item);
@@ -69,7 +66,6 @@ export class Observable implements IObservable {
       throw new Error("Push can only be called on an observable array.");
     }
   }
-
   subscribe(handler: Function) {
     this._subscribers.push(handler);
     return () => {
@@ -79,13 +75,11 @@ export class Observable implements IObservable {
       }
     };
   }
-
   publish() {
     this._subscribers.forEach((handler) =>
       handler(this._value, this._previousValue)
     ); // Pass both current and previous values
   }
-
   static delay(ms: number) {
     let timeoutId: number;
     const promise = new Promise((resolve) => {
@@ -94,7 +88,6 @@ export class Observable implements IObservable {
     const clear = () => clearTimeout(timeoutId);
     return { promise, clear };
   }
-
   // called by child observable subscriptions and by the constructor
   async compute() {
     if (this._computeFunction) {
@@ -120,20 +113,17 @@ export class Observable implements IObservable {
     }
   }
 }
-
 export class ObservableFactory {
   static create(initialValue: any, ...args: any[]): IObservable {
     return new Observable(initialValue, ...args);
   }
 }
-
 type Action = "Add" | "Remove";
 type BookFields = {
   name: string;
   author: string;
 };
 type Model = BookFields[];
-
 class Store {
   private static _instance: Store | null = null;
   private _state: IObservable;
@@ -167,17 +157,23 @@ class Store {
     this._state.push(newVal);
   };
   dispatch = (action: Action, payload: BookFields) => {
-    console.log(`dispatch(${action}, ${JSON.stringify(payload)})`);
+    console.log(
+      `in the Store: dispatch(${action}, ${JSON.stringify(payload)})`
+    );
+    const dispatchResult = this.reducer(action, payload);
+    console.log(`dispatchResult: ${dispatchResult}`);
 
-    this.value = this.reducer(action, payload);
+    this.value = dispatchResult;
     console.log(`this.value: ${this._state.value}`);
   };
   private reducer = (action: Action, fields: BookFields): Model => {
     const currentValue = this._state.value;
-    console.log(`currentValue ${JSON.stringify(currentValue)}`);
+    console.log(
+      `in the Store.reducer: currentValue ${JSON.stringify(currentValue)}`
+    );
     switch (action) {
       case "Add":
-        return currentValue.push(fields);
+        return [...currentValue, fields];
       case "Remove":
         return (this._state.value = []);
       default:
@@ -192,21 +188,6 @@ const init: Model = [
 ];
 const storeObject = Store.getInstance(init);
 export class Presenter {
-  // transform = async () => {
-  //   const repoData = await storeObject.value;
-  //   // if length of repoData > 0, transform it
-  //   if (repoData.length === 0) return;
-  //   const transformedRepoData = repoData.map((book: BookFields) => {
-  //     return {
-  //       name: book.name,
-  //       author: book.author,
-  //     };
-  //   });
-  //
-  //     `transformedRepoData: ${JSON.stringify(transformedRepoData, null, 2)}`
-  //   );
-  //   return transformedRepoData;
-  // };
   subscribe = (componentSubscriber) => {
     storeObject.subscribe((observableModel) => {
       const viewModel = observableModel.map((om) => {
@@ -219,27 +200,18 @@ export class Presenter {
   publish = () => {
     storeObject.publish();
   };
-  // load = async (componentSubscriber) => {
-  //   storeObject.subscribe((observableModel) => {
-  //     const viewModel = observableModel.map((om) => {
-  //       return { name: om.name, author: om.author };
-  //     });
-  //     componentSubscriber(viewModel);
-  //   });
-  //   storeObject.publish();
-  // };
   post = async (fields) => {
-    console.log(
-      `storeObject.push(${JSON.stringify(
-        fields,
-        null,
-        2
-      )}); storeObject.publish()`
-    );
-
-    storeObject.push(fields);
-    storeObject.publish();
-    // await storeObject.dispatch("Add", fields);
+    // console.log(
+    //   `storeObject.push(${JSON.stringify(
+    //     fields,
+    //     null,
+    //     2
+    //   )}); storeObject.publish()`
+    // );
+    // storeObject.push(fields);
+    // storeObject.publish();
+    console.log(`storeObject.dispatch("Add", fields)`);
+    await storeObject.dispatch("Add", fields);
   };
   delete = async () => {
     // await storeObject.removeBooks();
@@ -268,7 +240,6 @@ function App() {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(`PresenterObject.post(${JSON.stringify(fields, null, 2)})`);
-
     PresenterObject.post(fields);
     setFields(defaultValues);
   };
