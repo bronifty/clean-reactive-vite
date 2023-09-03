@@ -53,8 +53,16 @@ class Observable {
 }
 
 const main = () => {
-  const childObservable = new Observable(1);
+  const childObservable = new Observable(() => 1 * 1);
   const parentObservable = new Observable(() => childObservable.value + 1);
+  const grandParentObservable = new Observable(
+    () => parentObservable.value + 1
+  );
+  grandParentObservable.subscribe((val) =>
+    console.log(
+      `grandParentObservable newValue: ${JSON.stringify(val, null, 2)}`
+    )
+  );
   parentObservable.subscribe((val) =>
     console.log(`parentObservable newValue: ${JSON.stringify(val, null, 2)}`)
   );
@@ -64,6 +72,12 @@ const main = () => {
   console.log(
     `parentObservable current value: ${JSON.stringify(parentObservable.value)}`
   );
+  console.log(
+    `grandParentObservable current value: ${JSON.stringify(
+      grandParentObservable.value
+    )}`
+  );
+
   console.log("setting childObservable.value to 2 (from 1)");
 
   childObservable.value = 2;
