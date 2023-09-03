@@ -1,7 +1,7 @@
 export interface IObservable {
   value: any;
-  subscribe(handler: Function): Function;
   publish(): void;
+  subscribe(handler: Function): Function;
   push(item: any): void;
   compute(): Promise<void>;
 }
@@ -38,12 +38,10 @@ export class Observable implements IObservable {
     this._value = newValue;
     this.publish();
   }
-  push(item: any) {
-    if (Array.isArray(this._value)) {
-      this._value.push(item);
-    } else {
-      throw new Error("Push can only be called on an observable array.");
-    }
+  publish() {
+    this._subscribers.forEach((handler) =>
+      handler(this._value, this._previousValue)
+    );
   }
   subscribe(handler: Function) {
     this._subscribers.push(handler);
@@ -54,18 +52,12 @@ export class Observable implements IObservable {
       }
     };
   }
-  publish() {
-    this._subscribers.forEach((handler) =>
-      handler(this._value, this._previousValue)
-    );
-  }
-  static delay(ms: number) {
-    let timeoutId: number;
-    const promise = new Promise((resolve) => {
-      timeoutId = setTimeout(resolve, ms);
-    });
-    const clear = () => clearTimeout(timeoutId);
-    return { promise, clear };
+  push(item: any) {
+    if (Array.isArray(this._value)) {
+      this._value.push(item);
+    } else {
+      throw new Error("Push can only be called on an observable array.");
+    }
   }
   async compute() {
     if (this._computeFunction) {
@@ -86,6 +78,14 @@ export class Observable implements IObservable {
       );
       Observable._computeChildren.length = 0;
     }
+  }
+  static delay(ms: number) {
+    let timeoutId: number;
+    const promise = new Promise((resolve) => {
+      timeoutId = setTimeout(resolve, ms);
+    });
+    const clear = () => clearTimeout(timeoutId);
+    return { promise, clear };
   }
 }
 export class ObservableFactory {

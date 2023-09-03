@@ -101,16 +101,16 @@ export class ObservableFactory {
 type Model = number;
 type Message = "increment" | "decrement";
 class Repository {
-  private static instance: Repository | null = null;
+  private static _instance: Repository | null = null;
   private _state: IObservable;
   private constructor(init: any) {
     this._state = ObservableFactory.create(init);
   }
   static getInstance(init: any = {}) {
-    if (!this.instance) {
-      this.instance = new Repository(init);
+    if (!this._instance) {
+      this._instance = new Repository(init);
     }
-    return this.instance;
+    return this._instance;
   }
   get value() {
     return this._state.value;

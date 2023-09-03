@@ -36,14 +36,21 @@ export class Observable implements IObservable {
   }
   set value(newValue) {
     this._value = newValue;
+    this.publish();
   }
   publish = () => {
-    for (const callback of this._subscribers) {
-      callback(this._value);
+    for (const handler of this._subscribers) {
+      handler(this._value);
     }
   };
-  subscribe = (callback) => {
-    this._subscribers.push(callback);
+  subscribe = (handler) => {
+    this._subscribers.push(handler);
+    return () => {
+      const index = this._subscribers.indexOf(handler);
+      if (index > -1) {
+        this._subscribers.splice(index, 1);
+      }
+    };
   };
 }
 // Store manages Gateway and Observable as primary state of App
