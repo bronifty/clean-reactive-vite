@@ -149,53 +149,82 @@ class Store {
     this._state.subscribe(subscriber);
   };
   init = async () => {
-    this.value = await Gateway.get();
+    const { result } = await Gateway.get();
+    this.value = { result };
+    console.log(
+      `in Store.init; this.value: ${JSON.stringify(this.value, null, 2)}`
+    );
   };
   dispatch = (action: Action, payload: BookFields) => {
-    this.value = this.reducer(action, payload);
+    console.log(
+      `in Store.dispatch before call to reducer; this.value: ${JSON.stringify(
+        this.value,
+        null,
+        2
+      )}`
+    );
+    const reducerResult = this.reducer(action, payload);
+    this.value = { result: reducerResult };
+    // this.value.result = this.reducer(action, payload);
+    console.log(
+      `in Store.dispatch after call to reducer; this.value: ${JSON.stringify(
+        this.value,
+        null,
+        2
+      )}`
+    );
   };
   private reducer = (action: Action, fields: BookFields): Model => {
+    console.log(`this.value: ${JSON.stringify(this.value, null, 2)}`);
     switch (action) {
       case "Add":
-        return [...this.value, fields];
+        return [...this.value.result, fields];
       case "Remove":
-        return (this._state.value = []);
+        return [];
       default:
-        return this._state.value;
+        return this.value.result;
     }
   };
 }
 // refactor to put this in the store and use store to call the Gateway for an initial value
-const init: Model = [
-  { name: "Book 1", author: "Author 1" },
-  { name: "Book 2", author: "Author 2" },
-];
+const init: Model = [];
 const storeObject = Store.getInstance(init);
 export class Presenter {
   subscribe = (componentSubscriber) => {
     storeObject.subscribe((observableModel) => {
-      const viewModel = observableModel.map((om) => {
+      console.log(
+        `in Presenter.subscribe calling storeObject.subscribe with function to take observableModel: ${JSON.stringify(
+          observableModel,
+          null,
+          2
+        )}`
+      );
+      const viewModel = observableModel.result.map((om) => {
         return { name: om.name, author: om.author };
       });
       componentSubscriber(viewModel);
     });
   };
-  init = () => {
-    storeObject.init();
+  init = async () => {
+    await storeObject.init();
   };
   publish = () => {
     storeObject.publish();
   };
-  load = (callback) => {
+  load = async (callback) => {
     this.subscribe(callback);
-    this.init();
+    const presenterInitResult = await this.init();
+    console.log(
+      `presenterInitResult: ${JSON.stringify(presenterInitResult, null, 2)}`
+    );
+
     this.publish();
   };
   post = async (fields) => {
     await storeObject.dispatch("Add", fields);
   };
   delete = async () => {
-    storeObject.value = [];
+    storeObject.value = { result: [] };
   };
 }
 function App() {
@@ -213,8 +242,9 @@ function App() {
   React.useEffect(() => {
     const componentSubscriber = (viewModel) => setState(viewModel);
     async function load() {
-      await PresenterObject.subscribe(componentSubscriber);
-      PresenterObject.publish();
+      await PresenterObject.load(componentSubscriber);
+      // await PresenterObject.subscribe(componentSubscriber);
+      // PresenterObject.publish();
     }
     load();
   }, []);
@@ -230,7 +260,7 @@ function App() {
     <div>
       <h2>Books</h2>
       <div>
-        {state.map((book, idx) => {
+        {state?.map((book, idx) => {
           return (
             <div key={idx}>
               {book.name} by {book.author}
