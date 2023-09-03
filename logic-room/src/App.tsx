@@ -241,7 +241,7 @@ export class Presenter {
     storeObject.value = { result: [] };
   };
 }
-function App() {
+function App1() {
   const PresenterObject = new Presenter(instanceStore1);
   const [state, setState] = React.useState([]);
   const defaultValues = {
@@ -308,6 +308,85 @@ function App() {
       <h2>Refresh Books</h2>
       <button onClick={refreshBooks}>Refresh Books</button>
     </div>
+  );
+}
+function App2() {
+  const PresenterObject = new Presenter(instanceStore2);
+  const [state, setState] = React.useState([]);
+  const defaultValues = {
+    name: "",
+    author: "",
+  };
+  const [fields, setFields] = React.useState(defaultValues);
+  const setField = (field, value) => {
+    setFields((old) => ({ ...old, [field]: value }));
+  };
+  // loads data from store on mount
+  React.useEffect(() => {
+    const componentSubscriber = (viewModel) => setState(viewModel);
+    async function load() {
+      await PresenterObject.load(componentSubscriber);
+      // await PresenterObject.subscribe(componentSubscriber);
+      // PresenterObject.publish();
+    }
+    load();
+  }, []);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    PresenterObject.post(fields);
+    setFields(defaultValues);
+  };
+  const removeBooks = () => {
+    PresenterObject.delete();
+  };
+  const refreshBooks = () => {
+    PresenterObject.init();
+  };
+  return (
+    <div>
+      <h2>Books</h2>
+      <div>
+        {state?.map((book, idx) => {
+          return (
+            <div key={idx}>
+              {book.name} by {book.author}
+            </div>
+          );
+        })}
+      </div>
+      <h2>Add Book</h2>
+      <form onSubmit={(e) => handleSubmit(e)}>
+        <label htmlFor="name">name: </label>
+        <input
+          id="name"
+          type="text"
+          value={fields.name}
+          onChange={(e) => setField("name", e.target.value)}
+        />
+        <label htmlFor="author">author: </label>
+        <input
+          id="author"
+          type="text"
+          value={fields.author}
+          onChange={(e) => setField("author", e.target.value)}
+        />
+        <button type="submit">Submit</button>
+      </form>
+      <h2>Remove Books</h2>
+      <button onClick={removeBooks}>Delete Books</button>
+      <h2>Refresh Books</h2>
+      <button onClick={refreshBooks}>Refresh Books</button>
+    </div>
+  );
+}
+function App() {
+  return (
+    <>
+      <h1>App 1</h1>
+      <App1 />
+      <h1>App 2</h1>
+      <App2 />
+    </>
   );
 }
 export default App;
