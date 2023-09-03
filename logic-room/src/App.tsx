@@ -148,6 +148,9 @@ class Store {
   subscribe = (subscriber) => {
     this._state.subscribe(subscriber);
   };
+  init = async () => {
+    this.value = await Gateway.get();
+  };
   dispatch = (action: Action, payload: BookFields) => {
     this.value = this.reducer(action, payload);
   };
@@ -176,10 +179,17 @@ export class Presenter {
       });
       componentSubscriber(viewModel);
     });
-    storeObject.publish();
+  };
+  init = () => {
+    storeObject.init();
   };
   publish = () => {
     storeObject.publish();
+  };
+  load = (callback) => {
+    this.subscribe(callback);
+    this.init();
+    this.publish();
   };
   post = async (fields) => {
     await storeObject.dispatch("Add", fields);
