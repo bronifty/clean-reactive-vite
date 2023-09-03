@@ -203,6 +203,11 @@ const instanceStore2 = StoreFactory.createInstance(computedFunction);
 const init: Model = [];
 const storeObject = instanceStore2;
 export class Presenter {
+  private storeObject: Store;
+
+  constructor(store: Store) {
+    this.storeObject = store;
+  }
   subscribe = (componentSubscriber) => {
     storeObject.subscribe((observableModel) => {
       console.log(
@@ -237,7 +242,7 @@ export class Presenter {
   };
 }
 function App() {
-  const PresenterObject = new Presenter();
+  const PresenterObject = new Presenter(instanceStore1);
   const [state, setState] = React.useState([]);
   const defaultValues = {
     name: "",
