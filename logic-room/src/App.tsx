@@ -140,9 +140,6 @@ class Store {
     return this._state.value;
   }
   set value(newValue: any) {
-    // const intermediateValue1 = this._state.value;
-    // const intermediateValue2 = intermediateValue1.push(newValue);
-    // this._state.value = intermediateValue2;
     this._state.value = newValue;
   }
   publish = () => {
@@ -151,29 +148,13 @@ class Store {
   subscribe = (subscriber) => {
     this._state.subscribe(subscriber);
   };
-  push = (newVal) => {
-    console.log(`push(${JSON.stringify(newVal, null, 2)})`);
-
-    this._state.push(newVal);
-  };
   dispatch = (action: Action, payload: BookFields) => {
-    console.log(
-      `in the Store: dispatch(${action}, ${JSON.stringify(payload)})`
-    );
-    const dispatchResult = this.reducer(action, payload);
-    console.log(`dispatchResult: ${dispatchResult}`);
-
-    this.value = dispatchResult;
-    console.log(`this.value: ${this._state.value}`);
+    this.value = this.reducer(action, payload);
   };
   private reducer = (action: Action, fields: BookFields): Model => {
-    const currentValue = this._state.value;
-    console.log(
-      `in the Store.reducer: currentValue ${JSON.stringify(currentValue)}`
-    );
     switch (action) {
       case "Add":
-        return [...currentValue, fields];
+        return [...this.value, fields];
       case "Remove":
         return (this._state.value = []);
       default:
