@@ -125,16 +125,9 @@ type BookFields = {
 };
 type Model = BookFields[];
 class Store {
-  private static _instance: Store | null = null;
   private _state: IObservable;
-  private constructor(init: any) {
+  constructor(init: any) {
     this._state = ObservableFactory.create(init);
-  }
-  static getInstance(init: any = {}) {
-    if (!this._instance) {
-      this._instance = new Store(init);
-    }
-    return this._instance;
   }
   get value() {
     return this._state.value;
@@ -186,9 +179,29 @@ class Store {
     }
   };
 }
-// refactor to put this in the store and use store to call the Gateway for an initial value
+
+type StoreInitType = any; // Define the type for store initial state, replace 'any' as needed
+class StoreFactory {
+  private static singleton: Store | null = null;
+  static createSingleton(init: StoreInitType): Store {
+    if (!this.singleton) {
+      this.singleton = new Store(init);
+    }
+    return this.singleton;
+  }
+  static createInstance(init: StoreInitType): Store {
+    return new Store(init);
+  }
+}
+
+const instanceStore1 = StoreFactory.createInstance({
+  result: [{ name: "Instance Book 1", author: "Author 2" }],
+});
+const computedFunction = () => instanceStore1.value;
+const instanceStore2 = StoreFactory.createInstance(computedFunction);
+
 const init: Model = [];
-const storeObject = Store.getInstance(init);
+const storeObject = instanceStore2;
 export class Presenter {
   subscribe = (componentSubscriber) => {
     storeObject.subscribe((observableModel) => {
