@@ -201,20 +201,11 @@ export class Presenter {
     storeObject.publish();
   };
   post = async (fields) => {
-    // console.log(
-    //   `storeObject.push(${JSON.stringify(
-    //     fields,
-    //     null,
-    //     2
-    //   )}); storeObject.publish()`
-    // );
-    // storeObject.push(fields);
-    // storeObject.publish();
     console.log(`storeObject.dispatch("Add", fields)`);
     await storeObject.dispatch("Add", fields);
   };
   delete = async () => {
-    // await storeObject.removeBooks();
+    storeObject.value = [];
   };
 }
 function App() {
@@ -249,9 +240,15 @@ function App() {
   return (
     <div>
       <h2>Books</h2>
-      {state.map((book, i) => {
-        return <div key={i}>{book.name}</div>;
-      })}
+      <div>
+        {state.map((book, idx) => {
+          return (
+            <div key={idx}>
+              {book.name} by {book.author}
+            </div>
+          );
+        })}
+      </div>
       <h2>Add Book</h2>
       <form onSubmit={(e) => handleSubmit(e)}>
         <label htmlFor="name">name: </label>
