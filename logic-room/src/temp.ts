@@ -53,13 +53,19 @@ class Observable {
 }
 
 const main = () => {
-  const o1 = new Observable(1);
-  const o2 = new Observable(() => o1.value + 1);
-  o2.subscribe((val) =>
-    console.log(`subscriber to o2 changes; ${JSON.stringify(val, null, 2)}`)
+  const childObservable = new Observable(1);
+  const parentObservable = new Observable(() => childObservable.value + 1);
+  parentObservable.subscribe((val) =>
+    console.log(`parentObservable newValue: ${JSON.stringify(val, null, 2)}`)
   );
-  console.log(`o1 current value: ${JSON.stringify(o1.value)}`);
-  console.log(`o2 current value: ${JSON.stringify(o2.value)}`);
-  o1.value = 2;
+  console.log(
+    `childObservable current value: ${JSON.stringify(childObservable.value)}`
+  );
+  console.log(
+    `parentObservable current value: ${JSON.stringify(parentObservable.value)}`
+  );
+  console.log("setting childObservable.value to 2 (from 1)");
+
+  childObservable.value = 2;
 };
 main();
