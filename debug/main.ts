@@ -30,7 +30,6 @@ export class Observable {
       const activeObservable = Observable._computeActive;
       if (!activeObservable._dependencyArray.includes(this)) {
         activeObservable._dependencyArray.push(this);
-        this.subscribe(() => activeObservable.compute()); // Moved subscription logic here
       }
       return this._value;
     }
@@ -91,10 +90,16 @@ export class Observable {
     // }
     Observable._computeActive = null;
 
-    this.value = result;
+    if (result !== this._value) {
+      this._dependencyArray.forEach((dependency) => {
+        dependency.subscribe(() => this.compute());
+      });
+      this._dependencyArray = [];
+
+      this.value = result;
+    }
     this._isComputing = false;
 
-    this._dependencyArray = [];
     // this._childObservables.forEach((obs) => {
     //   obs.subscribe(() => this.compute());
     // });
