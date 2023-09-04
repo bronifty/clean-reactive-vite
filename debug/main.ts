@@ -14,16 +14,7 @@ export class Observable {
   static _childObservables: IObservable[] = [];
   constructor(init, ...args) {
     if (typeof init === "function") {
-      console.log(`typeof init is function`);
       this._valueFunction = init;
-      console.log(
-        `this._valueFunction = init: ${JSON.stringify(
-          this._valueFunction,
-          null,
-          2
-        )}`
-      );
-
       this._valueFunctionArgs = args;
       Observable._computeActive = true;
       this.compute();
@@ -80,21 +71,25 @@ export class ObservableFactory {
   }
 }
 
-const main = () => {
-  const childFn = () => 1;
+function main() {
+  function childFn() {
+    return 1;
+  }
   const childO = ObservableFactory.create(childFn);
   console.log(`childO.value: ${JSON.stringify(childO.value, null, 2)}`);
 
-  const parentFn = () => childO.value + 1;
+  function parentFn() {
+    return childO.value + 1;
+  }
   const parentO = ObservableFactory.create(parentFn);
   console.log(`parentO.value: ${JSON.stringify(parentO.value, null, 2)}`);
 
-  parentO.subscribe((value) => {
+  parentO.subscribe(function (value) {
     console.log(
       `parentO subscriber; parentO value: ${JSON.stringify(value, null, 2)}`
     );
   });
 
   childO.value = 2;
-};
+}
 main();
