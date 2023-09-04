@@ -59,13 +59,15 @@ export class Observable {
     //   }
     // }
     Observable._computeActive = null;
-    if (result !== this._value) {
-      this._dependencyArray.forEach((dependency) => {
-        dependency.subscribe(() => this.compute());
-      });
-      this._dependencyArray = [];
-      this.value = result;
+    if (result === this._value) {
+      return;
     }
+    this._dependencyArray.forEach((dependency) => {
+      // dependency.subscribe(() => this.compute());
+      this.bindComputedObservable(dependency);
+    });
+    this._dependencyArray = [];
+    this.value = result;
   };
   bindComputedObservable = (childObservable: IObservable) => {
     childObservable.subscribe(() => this.compute());
@@ -106,14 +108,14 @@ function main() {
     `grandparent.value: ${JSON.stringify(grandparent.value, null, 2)}`
   );
 
-  grandparent.subscribe(function (value) {
-    console.log(
-      `grandparent update; current value: ${JSON.stringify(value, null, 2)}`
-    );
-  });
   parent.subscribe(function (value) {
     console.log(
       `parent update; current value: ${JSON.stringify(value, null, 2)}`
+    );
+  });
+  grandparent.subscribe(function (value) {
+    console.log(
+      `grandparent update; current value: ${JSON.stringify(value, null, 2)}`
     );
   });
 
