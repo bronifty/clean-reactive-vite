@@ -14,9 +14,8 @@ function Descendants({ data, title }) {
 
   return (
     <div>
-      <div>
-        {title}: {JSON.stringify(dataValue, null, 2)}
-      </div>
+      <h1>{title}</h1>
+      <div>{JSON.stringify(dataValue, null, 2)}</div>
       <Form data={data} />
     </div>
   );

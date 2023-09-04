@@ -13,12 +13,12 @@ import {
 function App() {
   return (
     <>
-      <Descendants data={child} title="Child" />
-      <Descendants data={parent} title="Parent" />
-      <Descendants data={grandparent} title="Grandparent" />
-      <Books data={booksChild} title="Child" />
-      <Books data={booksParent} title="Parent" />
-      <Books data={booksGrandParent} title="Parent" />
+      <Descendants data={child} title="child" />
+      <Descendants data={parent} title="parent" />
+      <Descendants data={grandparent} title="grandparent" />
+      <Books data={booksChild} title="booksChild" />
+      <Books data={booksParent} title="booksParent" />
+      <Books data={booksGrandParent} title="booksGrandParent" />
     </>
   );
 }
