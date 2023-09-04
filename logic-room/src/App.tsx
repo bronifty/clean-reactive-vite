@@ -1,7 +1,14 @@
 import React from "react";
 import Descendants from "./components/Descendants";
 import Books from "./components/Books2";
-import { booksChild, booksParent, child, parent, grandparent } from "./store";
+import {
+  booksChild,
+  booksParent,
+  booksGrandParent,
+  child,
+  parent,
+  grandparent,
+} from "./store";
 
 function App() {
   return (
@@ -11,6 +18,7 @@ function App() {
       <Descendants data={grandparent} title="Grandparent" />
       <Books data={booksChild} title="Child" />
       <Books data={booksParent} title="Parent" />
+      <Books data={booksGrandParent} title="Parent" />
     </>
   );
 }

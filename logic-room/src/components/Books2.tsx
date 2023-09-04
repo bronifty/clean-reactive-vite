@@ -11,15 +11,12 @@ function Descendants({ data, title }) {
       dataSubscription();
     };
   }, []);
-  // const handleButtonClick = () => {
-  //   data.value = [...data.value, { name: "another one", author: "iykyk" }];
-  // };
+
   return (
     <div>
       <div>
         {title}: {JSON.stringify(dataValue, null, 2)}
       </div>
-      {/* <button onClick={handleButtonClick}>Update Child Value</button> */}
       <Form data={data} />
     </div>
   );

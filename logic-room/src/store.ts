@@ -9,11 +9,13 @@ const booksChild = ObservableFactory.create([
   { name: "Book 2", author: "Author 2" },
 ]);
 const booksParent = ObservableFactory.create(() => booksChild.value);
+const booksGrandParent = ObservableFactory.create(() => booksParent.value);
 
-// const secondComputedFunction = () => firstComputed.value;
-// const secondComputed = ObservableFactory.create(secondComputedFunction);
-
-// const thirdComputedFunction = () => secondComputed.value;
-// const thirdComputed = ObservableFactory.create(thirdComputedFunction);
-
-export { child, parent, grandparent, booksChild, booksParent };
+export {
+  child,
+  parent,
+  grandparent,
+  booksChild,
+  booksParent,
+  booksGrandParent,
+};
