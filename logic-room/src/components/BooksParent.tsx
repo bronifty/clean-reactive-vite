@@ -9,10 +9,9 @@ import {
   grandparent,
 } from "../utils/store";
 
-const data = booksChild;
-const title = "booksChild";
-
-export function BooksChildren2() {
+export function BooksParent() {
+  const data = booksParent;
+  const title = "booksParent";
   const [dataValue, setDataValue] = React.useState(data.value);
   React.useEffect(() => {
     const dataSubscription = data.subscribe((value) => {
