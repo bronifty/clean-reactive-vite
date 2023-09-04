@@ -8,53 +8,106 @@ export interface IObservable {
 export class Observable {
   private _value: any;
   private _subscribers: Function[] = [];
-  private _valueFunction: Function | null = null;
-  private _valueFunctionArgs: any[] = [];
-  static _computeActive: IObservable | null = null;
-  static _childObservables: IObservable[] = [];
+  private _valueFn: Function | null = null;
+  private _valueFnArgs: any[] = [];
+  private static _computeActive: IObservable | null = null;
+  private _dependencyArray: IObservable[] = [];
+  private _isComputing: boolean = false;
+  // private _computeActive: IObservable | null = null;
+  private static _childObservables: IObservable[] = [];
   constructor(init, ...args) {
     if (typeof init === "function") {
-      this._valueFunction = init;
-      this._valueFunctionArgs = args;
-      Observable._computeActive = true;
-      this.compute();
-      Observable._computeActive = false;
-      Observable._childObservables.forEach((obs) => {
-        obs.subscribe(() => this.compute());
-      });
+      this._valueFn = init;
+      this._valueFnArgs = args;
+
+      this.compute(); // assign this._valueFn(...this._valueFnArgs) to this._value
     } else {
       this._value = init;
     }
   }
   get value() {
-    if (Observable._computeActive) {
-      if (!Observable._childObservables.includes(this)) {
-        Observable._childObservables.push(this);
+    if (Observable._computeActive && Observable._computeActive !== this) {
+      const activeObservable = Observable._computeActive;
+      if (!activeObservable._dependencyArray.includes(this)) {
+        activeObservable._dependencyArray.push(this);
+        this.subscribe(() => activeObservable.compute()); // Moved subscription logic here
       }
+      return this._value;
     }
     return this._value;
   }
+
+  // get value() {
+  //   console.log(`in ${JSON.stringify(this, null, 2)} getter`);
+  //   if (Observable._computeActive) {
+  //     console.log("compute active");
+  //     console.log(
+  //       `what is the this value of what is being accessed? ${JSON.stringify(
+  //         this,
+  //         null,
+  //         2
+  //       )}`
+  //     );
+  //     // this.bindComputedObservable(this);
+
+  //     // if (!this._childObservables.includes(this)) {
+  //     //   console.log("adding self to child observables");
+  //     //   this._childObservables.push(this);
+  //     // }
+  //   }
+  //   return this._value;
+  // }
   set value(newVal) {
-    this._value = newVal;
-    this.publish();
+    if (this._value !== newVal) {
+      this._value = newVal;
+      this.publish();
+    }
   }
+
   subscribe = (handler: Function) => {
-    this._subscribers.push(handler);
+    if (!this._subscribers.includes(handler)) {
+      this._subscribers.push(handler);
+    }
   };
+
   publish = () => {
-    for (const sub of this._subscribers) {
-      sub(this.value);
+    for (const handler of this._subscribers) {
+      handler(this.value);
     }
   };
   compute = () => {
-    const result = this._valueFunction(...this._valueFunctionArgs);
-    if (typeof result !== "undefined") {
-      if (typeof result.then === "function") {
-        result.then((asyncResult) => (this.value = asyncResult));
-      } else {
-        this.value = result;
-      }
+    if (this._isComputing) {
+      return;
     }
+    this._isComputing = true;
+    Observable._computeActive = this; // catch child observables having their get accessors called and put them on this._childObservables subscription dependencies array
+    const result = this._valueFn(...this._valueFnArgs);
+    // if (typeof result !== "undefined") {
+    //   if (typeof result.then === "function") {
+    //     result.then((asyncResult) => (this.value = asyncResult));
+    //   } else {
+    //     this.value = result;
+    //   }
+    // }
+    Observable._computeActive = null;
+
+    this.value = result;
+    this._isComputing = false;
+
+    this._dependencyArray = [];
+    // this._childObservables.forEach((obs) => {
+    //   obs.subscribe(() => this.compute());
+    // });
+    // console.log(
+    //   `in ${JSON.stringify(
+    //     this,
+    //     null,
+    //     2
+    //   )} compute assigning ${result} to this.value`
+    // );
+  };
+  bindComputedObservable = (childObservable: IObservable) => {
+    childObservable.subscribe(() => this.compute());
   };
   push = (item) => {
     if (Array.isArray(this._value)) {
@@ -86,7 +139,11 @@ function main() {
 
   parentO.subscribe(function (value) {
     console.log(
-      `parentO subscriber; parentO value: ${JSON.stringify(value, null, 2)}`
+      `console.log of current value subscription on parentO updates: ${JSON.stringify(
+        value,
+        null,
+        2
+      )}`
     );
   });
 
