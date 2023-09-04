@@ -1,4 +1,4 @@
-import { ObservableFactory, IObservable } from "./observable/observable";
+import { ObservableFactory, IObservable } from "./observable";
 
 const child = ObservableFactory.create(() => 1);
 const parent = ObservableFactory.create(() => child.value + 1);
