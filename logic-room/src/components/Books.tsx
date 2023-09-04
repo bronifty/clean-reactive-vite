@@ -1,7 +1,7 @@
 import React from "react";
 import Form from "./Form";
 
-function Descendants({ data, title }) {
+export function Books({ data, title }) {
   const [dataValue, setDataValue] = React.useState(data.value);
   React.useEffect(() => {
     const dataSubscription = data.subscribe((value) => {
@@ -14,10 +14,9 @@ function Descendants({ data, title }) {
 
   return (
     <div>
-      <h1>{title}</h1>
+      <h2>{title}</h2>
       <div>{JSON.stringify(dataValue, null, 2)}</div>
       <Form data={data} />
     </div>
   );
 }
-export default Descendants;

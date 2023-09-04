@@ -1,6 +1,6 @@
 import React from "react";
 
-function Descendants({ data, title }) {
+export function Descendants({ data, title }) {
   const [dataValue, setDataValue] = React.useState(data.value);
   React.useEffect(() => {
     const dataSubscription = data.subscribe((value) => {
@@ -22,4 +22,3 @@ function Descendants({ data, title }) {
     </div>
   );
 }
-export default Descendants;
