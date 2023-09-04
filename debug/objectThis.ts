@@ -94,7 +94,7 @@
 const cup = {
   contents: "water",
   consume: () => {
-    console.log("You drink the ", cup.contents, ". Hydrating!");
+    console.log("You drink the ", this.contents, ". Hydrating!");
   },
 };
 
@@ -111,7 +111,7 @@ cup.consume(); // You eat the water. Spicy!
 const cup2 = {
   contents: "water",
   consume: () => {
-    console.log("You drink the ", cup2.contents, ". Hydrating!");
+    console.log("You drink the ", this.contents, ". Hydrating!");
   },
 };
 
@@ -123,4 +123,4 @@ const bowl2 = {
 };
 
 bowl2.consume = cup2.consume;
-bowl2.consume(); // You drink the water . Hydrating!
+bowl2.consume(); // error arrow does not capture this inside an object literal
