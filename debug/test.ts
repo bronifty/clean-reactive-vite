@@ -62,71 +62,71 @@ Deno.test(
 );
 
 // // Requirements 4 & 5
-// Deno.test("Observable recomputes value when child observables change", () => {
-//   const childObservable = ObservableFactory.create(5);
-//   const func = () => childObservable.value * 2;
-//   const parentObservable = ObservableFactory.create(func);
-//   assertEquals(parentObservable.value, 10);
-//   childObservable.value = 10;
-//   assertEquals(parentObservable.value, 20);
-// });
+Deno.test("Observable recomputes value when child observables change", () => {
+  const childObservable = ObservableFactory.create(5);
+  const func = () => childObservable.value * 2;
+  const parentObservable = ObservableFactory.create(func);
+  assertEquals(parentObservable.value, 10);
+  childObservable.value = 10;
+  assertEquals(parentObservable.value, 20);
+});
 
 // // Requirement 6
-// Deno.test("ObservableValue compute with async function", async () => {
-//   // Save the original delay method
-//   const originalDelay = Observable.delay;
-//   // Override with a mocked version that matches the expected type
-//   Observable.delay = (ms: number) => {
-//     return {
-//       promise: Promise.resolve(),
-//       clear: () => {},
-//     };
-//   };
-//   const { promise, clear } = Observable.delay(100);
-//   await promise;
-//   clear();
-//   const func = async () => {
-//     await Observable.delay(100); // This will now resolve immediately
-//     return 42;
-//   };
-//   const observable = ObservableFactory.create(func);
-//   await Observable.delay(100); // This will also resolve immediately
-//   // Manually trigger the computation without relying on setTimeout
-//   const computePromise = (observable as any).compute(); // Casting to any to bypass type checking and get the promise
-//   await computePromise; // Wait for the computation to complete
-//   assertEquals(observable.value, 42);
-//   // Restore the original delay method
-//   Observable.delay = originalDelay;
-// });
+Deno.test("ObservableValue compute with async function", async () => {
+  // Save the original delay method
+  const originalDelay = Observable.delay;
+  // Override with a mocked version that matches the expected type
+  Observable.delay = (ms: number) => {
+    return {
+      promise: Promise.resolve(),
+      clear: () => {},
+    };
+  };
+  const { promise, clear } = Observable.delay(100);
+  await promise;
+  clear();
+  const func = async () => {
+    await Observable.delay(100); // This will now resolve immediately
+    return 42;
+  };
+  const observable = ObservableFactory.create(func);
+  await Observable.delay(100); // This will also resolve immediately
+  // Manually trigger the computation without relying on setTimeout
+  const computePromise = (observable as any).compute(); // Casting to any to bypass type checking and get the promise
+  await computePromise; // Wait for the computation to complete
+  assertEquals(observable.value, 42);
+  // Restore the original delay method
+  Observable.delay = originalDelay;
+});
 
 // // Requirement 7 reassign computed observable value without affecting its internal computed dependencies calculation (setting the value won't override the computed function)
-// Deno.test(
-//   "Overwrite computed observable value without changing computed function",
-//   () => {
-//     const logChanges = (current: any, previous: any) => {
-//       console.log(`Changed to ${current} from ${previous} `);
-//     };
-//     // Initialize observables
-//     const i = ObservableFactory.create(1);
-//     const z = ObservableFactory.create(10);
-//     const func = () => {
-//       return i.value;
-//     };
-//     const computed = ObservableFactory.create(func);
-//     computed.subscribe(logChanges);
-//     console.log(`computed.value: ${computed.value}`); // computed.value: 1
-//     assertEquals(computed.value, 1);
-//     i.value = 2; // logChanges(2,1)
-//     assertEquals(computed.value, 2);
-//     // Overwrite value directly without affecting computed function
-//     const newFunc = () => {
-//       return z.value;
-//     };
-//     computed.value = newFunc();
-//     assertEquals(computed.value, 10);
-//     z.value = 2; // no change
-//     assertEquals(computed.value, 10);
-//     i.value = 2; // logChanges(2,10)
-//     assertEquals(computed.value, 2);
-//   }
-// );
+Deno.test(
+  "Overwrite computed observable value without changing computed function",
+  () => {
+    const logChanges = (current: any, previous: any) => {
+      console.log(`Changed to ${current} from ${previous} `);
+    };
+    // Initialize observables
+    const i = ObservableFactory.create(1);
+    const j = ObservableFactory.create(10);
+    const func = () => {
+      return i.value;
+    };
+    const computed = ObservableFactory.create(func);
+    computed.subscribe(logChanges);
+    console.log(`computed.value: ${computed.value}`); // computed.value: 1
+    assertEquals(computed.value, 1);
+    i.value = 2; // logChanges(2,1)
+    assertEquals(computed.value, 2);
+    // Overwrite value directly without affecting computed function
+    const newFunc = () => {
+      return j.value;
+    };
+    computed.value = newFunc();
+    assertEquals(computed.value, 10);
+    j.value = 2; // no change
+    assertEquals(computed.value, 10);
+    i.value = 3; // logChanges(2,10)
+    assertEquals(computed.value, 3);
+  }
+);

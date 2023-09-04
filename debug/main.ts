@@ -87,6 +87,14 @@ export class Observable implements IObservable {
       throw new Error("Push can only be called on an observable array.");
     }
   };
+  static delay(ms: number) {
+    let timeoutId: number;
+    const promise = new Promise((resolve) => {
+      timeoutId = setTimeout(resolve, ms);
+    });
+    const clear = () => clearTimeout(timeoutId);
+    return { promise, clear };
+  }
 }
 
 export class ObservableFactory {
