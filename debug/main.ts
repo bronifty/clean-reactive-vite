@@ -17,16 +17,15 @@ export class Observable {
     if (typeof init === "function") {
       this._valueFn = init;
       this._valueFnArgs = args;
-      this.compute(); // assign this._valueFn(...this._valueFnArgs) to this._value
+      this.compute();
     } else {
       this._value = init;
     }
   }
   get value() {
     if (Observable._computeActive && Observable._computeActive !== this) {
-      const activeObservable = Observable._computeActive;
-      if (!activeObservable._dependencyArray.includes(this)) {
-        activeObservable._dependencyArray.push(this);
+      if (!Observable._computeActive._dependencyArray.includes(this)) {
+        Observable._computeActive._dependencyArray.push(this);
       }
       return this._value;
     }
