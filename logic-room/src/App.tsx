@@ -1,6 +1,6 @@
 import React from "react";
 import Descendants from "./components/Descendants";
-import Books from "./components/Books";
+import Books from "./components/Books2";
 import { booksChild, booksParent, child, parent, grandparent } from "./store";
 
 function App() {

@@ -6,13 +6,7 @@ type BookFields = {
   author: string;
 };
 
-export default function Books({
-  data,
-  title,
-}: {
-  data: IObservable;
-  title: string;
-}) {
+export default function Books({ data, title }: { data; title }) {
   const [booksValue, setBooksValue] = React.useState(data.value);
   React.useEffect(() => {
     const booksSubscription = data.subscribe((value) => {
