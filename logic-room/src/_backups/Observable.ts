@@ -3,7 +3,7 @@ export interface IObservable {
   subscribe(handler: Function): Function;
   push(item: any): void;
   publish(): void;
-  compute(): void;
+  compute(): Promise<void>;
 }
 export class Observable implements IObservable {
   private _value: any;
@@ -14,7 +14,6 @@ export class Observable implements IObservable {
   private _computeArgs: any[] = [];
   private static _computeChildren: Observable[] = [];
   private _childSubscriptions: Function[] = [];
-  private _dependencies: IObservable[] = [];
 
   constructor(initialValue: any, ...args: any[]) {
     this._previousValue = undefined; // Initialize _previousValue
@@ -25,11 +24,6 @@ export class Observable implements IObservable {
     } else {
       this._value = initialValue;
     }
-  }
-
-  addDependency(dependency: IObservable) {
-    this._dependencies.push(dependency);
-    dependency.subscribe(() => this.compute());
   }
 
   get value() {
@@ -70,6 +64,7 @@ export class Observable implements IObservable {
 
   publish() {
     console.log(`Observable publish`);
+
     this._subscribers.forEach((handler) => {
       console.log(
         `Observable publish this._subscribers.forEach(handler) ${JSON.stringify(
@@ -78,6 +73,7 @@ export class Observable implements IObservable {
           2
         )}`
       );
+
       handler(this._value, this._previousValue);
     }); // Pass both current and previous values
   }
@@ -90,24 +86,40 @@ export class Observable implements IObservable {
     const clear = () => clearTimeout(timeoutId);
     return { promise, clear };
   }
-  bindComputedObservable(sourceObservable: IObservable) {
-    sourceObservable.subscribe(() => {
-      this.compute();
-    });
-  }
-  compute() {
-    if (this._computeFunction) {
-      const computedValue = this._computeFunction(...this._computeArgs);
 
+  // called by child observable subscriptions and by the constructor
+  async compute() {
+    console.log(
+      `Observable compute; this._childSubscriptions ${JSON.stringify(
+        this._childSubscriptions.length,
+        null,
+        2
+      )}`
+    );
+    for (const sub of this._childSubscriptions) {
+      console.log(`child sub ${JSON.stringify(sub, null, 2)}`);
+    }
+
+    if (this._computeFunction) {
+      // Unsubscribe old child subscriptions
+      this._childSubscriptions.forEach((unsubscribe) => unsubscribe());
+      this._childSubscriptions.length = 0;
+
+      Observable._computeActive = this;
+      this._previousValue = this._value; // Store the current value as the previous value
+      const computedValue = this._computeFunction(...this._computeArgs);
+      // Handle the case where the computed value is a Promise
       if (computedValue instanceof Promise) {
-        computedValue.then((resolvedValue) => {
-          this._value = resolvedValue;
-          this.publish();
-        });
+        this._value = await computedValue; // Await the promise resolution
       } else {
         this._value = computedValue;
-        this.publish();
       }
+      this.publish();
+      Observable._computeActive = null;
+      Observable._computeChildren.forEach((child) =>
+        this._childSubscriptions.push(child.subscribe(() => this.compute()))
+      );
+      Observable._computeChildren.length = 0;
     }
   }
 }
