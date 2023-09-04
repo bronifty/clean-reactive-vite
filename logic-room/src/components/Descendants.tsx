@@ -18,7 +18,7 @@ function Descendants({ data, title }) {
       <div>
         {title}: {dataValue}
       </div>
-      <button onClick={handleButtonClick}>Update Child Value</button>
+      <button onClick={handleButtonClick}>Update {title} Value</button>
     </div>
   );
 }
