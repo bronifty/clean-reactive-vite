@@ -1,6 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.199.0/testing/asserts.ts";
 import { deferred } from "https://deno.land/std@0.199.0/async/deferred.ts";
-import { ObservableFactory, Observable } from "./temp.ts";
+import { ObservableFactory, Observable } from "./main.ts";
 // import { ObservableFactory, Observable } from "./observable.ts";
 
 // Publish changes to subscriber functions when values change.
@@ -12,53 +12,54 @@ import { ObservableFactory, Observable } from "./temp.ts";
 
 // Requirement 1
 Deno.test("Observable publish and subscribe", () => {
-  // observable is effectively a signal or a stream of values/events that other values can react to
-  const observable = ObservableFactory.create(42);
-  // trackedVal is a variable that will be updated when the observable is updated
+  const observable = ObservableFactory.create(41);
   let trackedVal: number | null = null;
   observable.subscribe((current: number) => {
+    console.log("Subscription callback called with value:", current); // Add this log
     trackedVal = current;
   });
+  console.log("Setting value to 42"); // Add this log
   observable.value = 42;
   assertEquals(trackedVal, 42);
+  console.log("Setting value to 43"); // Add this log
   observable.value = 43;
   assertEquals(trackedVal, 43);
 });
 
 // // Requirement 2
-// Deno.test("Observable publish on array replacement, not modification", () => {
-//   const observable = ObservableFactory.create([]);
-//   let count = 0;
-//   // any published change will inc count
-//   observable.subscribe(() => count++);
-//   const arr = [1, 2];
-//   observable.value = arr; // count++
-//   arr.push(3); // no count++ because arr is not being replaced
-//   observable.value = [1, 2, 3]; // count++
-//   assertEquals(count, 2);
-//   arr.push(4); // no count++ because arr is not being replaced
-//   assertEquals(count, 2);
-//   observable.value = [1, 2, 3, 4]; // count++
-//   assertEquals(count, 3);
-// });
+Deno.test("Observable publish on array replacement, not modification", () => {
+  const observable = ObservableFactory.create([]);
+  let count = 0;
+  // any published change will inc count
+  observable.subscribe(() => count++);
+  const arr = [1, 2];
+  observable.value = arr; // count++
+  arr.push(3); // no count++ because arr is not being replaced
+  observable.value = [1, 2, 3]; // count++
+  assertEquals(count, 2);
+  arr.push(4); // no count++ because arr is not being replaced
+  assertEquals(count, 2);
+  observable.value = [1, 2, 3, 4]; // count++
+  assertEquals(count, 3);
+});
 
 // // Requirement 3
-// Deno.test("Observable sets value with a function and arguments", () => {
-//   const func = (a: number, b: number) => a + b;
-//   const observable = ObservableFactory.create(func, 3, 4);
-//   assertEquals(observable.value, 7);
-// });
+Deno.test("Observable sets value with a function and arguments", () => {
+  const func = (a: number, b: number) => a + b;
+  const observable = ObservableFactory.create(func, 3, 4);
+  assertEquals(observable.value, 7);
+});
 
 // // Requirement 3.5
-// Deno.test(
-//   "Observable sets value with a function and variable number of arguments",
-//   () => {
-//     const func = (...args: number[]) =>
-//       args.reduce((acc, value) => acc + value, 0);
-//     const observable = ObservableFactory.create(func, 3, 4, 5, 6); // You can pass any number of arguments here
-//     assertEquals(observable.value, 18); // The sum of 3, 4, 5, and 6
-//   }
-// );
+Deno.test(
+  "Observable sets value with a function and variable number of arguments",
+  () => {
+    const func = (...args: number[]) =>
+      args.reduce((acc, value) => acc + value, 0);
+    const observable = ObservableFactory.create(func, 3, 4, 5, 6); // You can pass any number of arguments here
+    assertEquals(observable.value, 18); // The sum of 3, 4, 5, and 6
+  }
+);
 
 // // Requirements 4 & 5
 // Deno.test("Observable recomputes value when child observables change", () => {
