@@ -49,6 +49,12 @@ export class Observable implements IObservable {
     if (!this._subscribers.includes(handler)) {
       this._subscribers.push(handler);
     }
+    return () => {
+      const index = this._subscribers.indexOf(handler);
+      if (index > -1) {
+        this._subscribers.splice(index, 1);
+      }
+    };
   };
   publish = () => {
     for (const handler of this._subscribers) {
