@@ -7,15 +7,15 @@ type BookFields = {
 };
 
 export default function Books({
-  booksData,
+  data,
   title,
 }: {
-  booksData: IObservable;
+  data: IObservable;
   title: string;
 }) {
-  const [booksValue, setBooksValue] = React.useState(booksData.value);
+  const [booksValue, setBooksValue] = React.useState(data.value);
   React.useEffect(() => {
-    const booksSubscription = booksData.subscribe((value) => {
+    const booksSubscription = data.subscribe((value) => {
       setBooksValue(value);
     });
     return () => {
@@ -36,8 +36,8 @@ export default function Books({
   React.useEffect(() => {
     const componentSubscriber = (observableValue) => setState(observableValue);
     async function load() {
-      booksData.subscribe(componentSubscriber);
-      booksData.publish();
+      data.subscribe(componentSubscriber);
+      data.publish();
       // await PresenterObject.load(componentSubscriber);
       // await PresenterObject.subscribe(componentSubscriber);
       // PresenterObject.publish();
@@ -46,8 +46,8 @@ export default function Books({
   }, []);
   const handleSubmit = (e) => {
     e.preventDefault();
-    booksData.push(fields);
-    booksData.publish();
+    data.push(fields);
+    data.publish();
     // PresenterObject.post(fields);
     setFields(defaultValues);
   };
@@ -58,7 +58,7 @@ export default function Books({
     // PresenterObject.init();
   };
   const publishBooks = () => {
-    booksData.publish();
+    data.publish();
   };
   return (
     <div>

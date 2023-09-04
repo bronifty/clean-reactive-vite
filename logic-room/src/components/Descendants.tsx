@@ -1,25 +1,13 @@
 import React from "react";
-// import { child, parent, grandparent } from "../store";
+
 function Descendants({ data, title }) {
-  const [value, setValue] = React.useState(data.value);
-  // const [parentValue, setParentValue] = React.useState(parent.value);
-  // const [grandparentValue, setGrandparentValue] = React.useState(
-  //   grandparent.value
-  // );
+  const [dataValue, setDataValue] = React.useState(data.value);
   React.useEffect(() => {
-    const childSubscription = data.subscribe((value) => {
-      setValue(value);
+    const dataSubscription = data.subscribe((value) => {
+      setDataValue(value);
     });
-    // const parentSubscription = parent.subscribe((value) => {
-    //   setParentValue(value);
-    // });
-    // const grandParentSubscription = grandparent.subscribe((value) => {
-    //   setGrandparentValue(value);
-    // });
     return () => {
-      childSubscription();
-      // parentSubscription();
-      // grandParentSubscription();
+      dataSubscription();
     };
   }, []);
   const handleButtonClick = () => {
@@ -28,10 +16,8 @@ function Descendants({ data, title }) {
   return (
     <div>
       <div>
-        {title}: {value}
+        {title}: {dataValue}
       </div>
-      {/* <div>Parent Value: {parentValue}</div>
-      <div>Grandparent Value: {grandparentValue}</div> */}
       <button onClick={handleButtonClick}>Update Child Value</button>
     </div>
   );

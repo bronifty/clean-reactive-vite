@@ -9,8 +9,8 @@ function App() {
       <Descendants data={child} title="Child" />
       <Descendants data={parent} title="Parent" />
       <Descendants data={grandparent} title="Grandparent" />
-      {/* <Books data={booksChild} title="Child" />
-      <Books data={booksParent} title="Parent" /> */}
+      <Books data={booksChild} title="Child" />
+      <Books data={booksParent} title="Parent" />
     </>
   );
 }
