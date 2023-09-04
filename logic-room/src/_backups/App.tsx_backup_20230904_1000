@@ -1,5 +1,5 @@
 import React from "react";
-// import { ObservableFactory, IObservable } from "./observable/observable";
+import { ObservableFactory, IObservable } from "./observable/observable";
 
 // type Action = "Add" | "Remove";
 // type BookFields = {
@@ -119,107 +119,56 @@ import React from "react";
 //   );
 // }
 // export default App;
-// function ObservableComponent() {
-//   const [child, setChild] = React.useState(null);
-//   const [parent, setParent] = React.useState(null);
-//   const [grandparent, setGrandparent] = React.useState(null);
-
-//   const [childValue, setChildValue] = React.useState(1);
-//   const [parentValue, setParentValue] = React.useState(null);
-//   const [grandparentValue, setGrandparentValue] = React.useState(null);
-
-//   React.useEffect(() => {
-//     function childFn() {
-//       return 1;
-//     }
-//     const childObservable = ObservableFactory.create(childFn);
-
-//     function parentFn() {
-//       return childObservable.value + 1;
-//     }
-//     const parentObservable = ObservableFactory.create(parentFn);
-
-//     function grandparentFn() {
-//       return parentObservable.value + 1;
-//     }
-//     const grandparentObservable = ObservableFactory.create(grandparentFn);
-
-//     setChild(childObservable);
-//     setParent(parentObservable);
-//     setGrandparent(grandparentObservable);
-
-//     const childSubscription = childObservable.subscribe((value) => {
-//       setChildValue(value);
-//     });
-//     const parentSubscription = parentObservable.subscribe((value) => {
-//       setParentValue(value);
-//     });
-//     const grandparentSubscription = grandparentObservable.subscribe((value) => {
-//       setGrandparentValue(value);
-//     });
-
-//     return () => {
-//       childSubscription();
-//       parentSubscription();
-//       grandparentSubscription();
-//     };
-//   }, []);
-
-//   const handleButtonClick = () => {
-//     if (child) {
-//       child.value += 1;
-//     }
-//   };
-
-//   return (
-//     <div>
-//       <div>Child Value: {childValue}</div>
-//       <div>Parent Value: {parentValue}</div>
-//       <div>Grandparent Value: {grandparentValue}</div>
-//       <button onClick={handleButtonClick}>Update Child Value</button>
-//     </div>
-//   );
-// }
-
-// const child = ObservableFactory.create(() => 1);
-// const parent = ObservableFactory.create(() => child.value + 1);
-// const grandparent = ObservableFactory.create(() => parent.value + 1);
-import { child, parent, grandparent } from "./store";
 function ObservableComponent() {
-  // const child = React.useRef(ObservableFactory.create(() => 1)).current;
-  // const parent = React.useRef(
-  //   ObservableFactory.create(() => child.value + 1)
-  // ).current;
-  // const grandparent = React.useRef(
-  //   ObservableFactory.create(() => parent.value + 1)
-  // ).current;
+  const [child, setChild] = React.useState(null);
+  const [parent, setParent] = React.useState(null);
+  const [grandparent, setGrandparent] = React.useState(null);
 
-  const [childValue, setChildValue] = React.useState(child.value);
-  const [parentValue, setParentValue] = React.useState(parent.value);
-  const [grandparentValue, setGrandparentValue] = React.useState(
-    grandparent.value
-  );
+  const [childValue, setChildValue] = React.useState(1);
+  const [parentValue, setParentValue] = React.useState(null);
+  const [grandparentValue, setGrandparentValue] = React.useState(null);
 
   React.useEffect(() => {
-    const childSubscription = child.subscribe((value) => {
+    function childFn() {
+      return 1;
+    }
+    const childObservable = ObservableFactory.create(childFn);
+
+    function parentFn() {
+      return childObservable.value + 1;
+    }
+    const parentObservable = ObservableFactory.create(parentFn);
+
+    function grandparentFn() {
+      return parentObservable.value + 1;
+    }
+    const grandparentObservable = ObservableFactory.create(grandparentFn);
+
+    setChild(childObservable);
+    setParent(parentObservable);
+    setGrandparent(grandparentObservable);
+
+    const childSubscription = childObservable.subscribe((value) => {
       setChildValue(value);
     });
-    const parentSubscription = parent.subscribe((value) => {
+    const parentSubscription = parentObservable.subscribe((value) => {
       setParentValue(value);
     });
-    const grandParentSubscription = grandparent.subscribe((value) => {
-      setGrandparentValue(grandparent.value);
+    const grandparentSubscription = grandparentObservable.subscribe((value) => {
+      setGrandparentValue(value);
     });
 
     return () => {
       childSubscription();
       parentSubscription();
-      grandParentSubscription();
+      grandparentSubscription();
     };
   }, []);
 
   const handleButtonClick = () => {
-    child.value += 1;
+    if (child) {
+      child.value += 1;
+    }
   };
 
   return (
