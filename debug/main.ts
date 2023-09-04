@@ -23,11 +23,12 @@ export class Observable {
     }
   }
   get value() {
-    if (Observable._computeActive && Observable._computeActive !== this) {
-      if (!Observable._computeActive._dependencyArray.includes(this)) {
-        Observable._computeActive._dependencyArray.push(this);
-      }
-      return this._value;
+    if (
+      Observable._computeActive &&
+      Observable._computeActive !== this &&
+      !Observable._computeActive._dependencyArray.includes(this)
+    ) {
+      Observable._computeActive._dependencyArray.push(this);
     }
     return this._value;
   }
@@ -97,12 +98,26 @@ function main() {
   const parent = ObservableFactory.create(parentFn);
   console.log(`parent.value: ${JSON.stringify(parent.value, null, 2)}`);
 
+  function grandparentFn() {
+    return parent.value + 1;
+  }
+  const grandparent = ObservableFactory.create(grandparentFn);
+  console.log(
+    `grandparent.value: ${JSON.stringify(grandparent.value, null, 2)}`
+  );
+
+  grandparent.subscribe(function (value) {
+    console.log(
+      `grandparent update; current value: ${JSON.stringify(value, null, 2)}`
+    );
+  });
   parent.subscribe(function (value) {
     console.log(
       `parent update; current value: ${JSON.stringify(value, null, 2)}`
     );
   });
 
+  console.log(`child.value = 2`);
   child.value = 2;
 }
 main();
