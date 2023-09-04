@@ -1,4 +1,8 @@
 class HttpGateway {
+  books = [
+    { name: "Book 1", author: "Author 1" },
+    { name: "Book 2", author: "Author 2" },
+  ];
   get = async (path) => {
     const response = await fetch(path);
     const booksDto = response.json();
