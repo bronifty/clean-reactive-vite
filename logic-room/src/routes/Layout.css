@@ -2,6 +2,7 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   height: 100vh;
+  width: 100vw;
 }
 
 .navbar {
@@ -9,6 +10,9 @@
   justify-content: space-around;
   background-color: #f8f9fa;
   padding: 1rem;
+  width: 100%; /* This will make the navbar span the entire width */
+  height: 60px; /* This will keep the height fixed. Adjust as needed */
+  box-sizing: border-box; /* This ensures padding and border are included in the height and width */
 }
 
 .content {
