@@ -1,26 +1,17 @@
 class HttpGateway {
-  books = [
+  data = [
     { name: "Book 1", author: "Author 1" },
     { name: "Book 2", author: "Author 2" },
   ];
   get = async (path) => {
-    const response = await fetch(path);
-    const booksDto = response.json();
-    return booksDto;
+    return { result: this.data };
   };
-
   post = async (path, requestDto) => {
-    const response = await fetch(path, {
-      method: "POST",
-      body: JSON.stringify(requestDto),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const responseDto = response.json();
-    return responseDto;
+    this.data.push(requestDto);
+    return { success: true };
+  }; // test
+  delete = async (path) => {
+    this.data.length = 0;
+    return { success: true };
   };
 }
-
-const httpGateway = new HttpGateway();
-export default httpGateway;

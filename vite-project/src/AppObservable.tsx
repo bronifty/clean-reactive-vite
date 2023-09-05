@@ -143,7 +143,7 @@ const modelObservable = Repository.getInstance(init);
 
 const view = (model: Model, dispatch: React.Dispatch<Message>): JSX.Element => (
   <div>
-    <h1>lol</h1>
+    <h1>lol!</h1>
     <button onClick={() => dispatch("increment")}>+</button>
     <div>{model}</div>
     <button onClick={() => dispatch("decrement")}>-</button>

@@ -2,7 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
-import Root from "./routes/root";
+import { Root } from "./routes/root";
+import { Index } from "./routes/index";
 import ErrorPage from "./error-page";
 import { BooksLayout } from "./components/BooksLayout";
 import { DescendantsLayout } from "./components/DescendantsLayout";
@@ -14,14 +15,16 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       {
+        index: true,
+        element: <Index />,
+      },
+      {
         path: "books/",
         element: <BooksLayout />,
-        // element: <BooksChild />,
       },
       {
         path: "dependents/",
         element: <DescendantsLayout />,
-        // element: <BooksChild />,
       },
     ],
   },

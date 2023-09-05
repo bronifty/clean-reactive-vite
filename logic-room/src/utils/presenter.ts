@@ -1,6 +1,6 @@
-import booksRepository from "./BooksRepository.js";
+import booksRepository from "./repository";
 
-export default class BooksPresenter {
+export class BooksPresenter {
   load = async (callback) => {
     await booksRepository.getBooks((booksPm) => {
       const booksVm = booksPm.map((bookPm) => {
